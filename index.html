@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Valyrian Master SMC [v7.0] - Algoritmo Institucional XAUUSD</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+    <style>
+        .hero-section {
+            text-align: center;
+            padding: 50px 20px 40px;
+            max-width: 850px;
+            margin: 0 auto;
+        }
+        .hero-title {
+            font-size: 38px;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, #00E5FF 0%, #FFD700 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero-desc {
+            font-size: 16px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin: 40px 0;
+        }
+        .feature-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 24px;
+            text-align: left;
+        }
+        .feature-icon {
+            font-size: 28px;
+            margin-bottom: 12px;
+        }
+        .checker-box {
+            max-width: 580px;
+            margin: 40px auto;
+            background: var(--bg-card);
+            border: 1px solid var(--accent-cyan);
+            border-radius: 14px;
+            padding: 30px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Navegación -->
+    <header class="header-bar" style="margin-bottom: 10px;">
+        <div class="brand-title">
+            <span style="font-size: 26px;">🛡️</span>
+            <h1>VALYRIAN MASTER SMC</h1>
+            <span class="brand-badge">XAUUSD PRO</span>
+        </div>
+        <div>
+            <a href="admin.html" class="btn btn-secondary btn-sm">🔒 Portal de Administrador</a>
+        </div>
+    </header>
+
+    <!-- Hero Comercial -->
+    <section class="hero-section">
+        <h1 class="hero-title">PRECISIÓN CUANTITATIVA INSTITUCIONAL EN ORO</h1>
+        <p class="hero-desc">
+            El motor unificado que integra <strong>Smart Money Concepts (SMC)</strong>, 
+            <strong>Zonas OTE 61.8% - 78.6%</strong>, <strong>Fair Value Gaps con 50% CE</strong> 
+            y la <strong>Simulación Cuantitativa de Barrido Judas Swing Asia &rarr; Londres</strong> en TradingView.
+        </p>
+    </section>
+
+    <!-- Verificador de Licencia para Clientes -->
+    <section class="checker-box">
+        <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 8px;">🔍 Verificador de Licencia en Vivo</h2>
+        <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 20px;">
+            Introduce tu usuario de TradingView o Correo para verificar el estado de tu suscripción:
+        </p>
+        <div style="display: flex; gap: 8px;">
+            <input type="text" id="checkInput" class="form-input" placeholder="Tu usuario de TradingView o Correo...">
+            <button class="btn btn-primary" style="width: auto; margin-top: 0;" onclick="checkMyLicense()">CONSULTAR</button>
+        </div>
+        <div id="checkResult" style="margin-top: 20px; display: none;"></div>
+    </section>
+
+    <!-- Características Principales -->
+    <section class="features-grid">
+        <div class="feature-box">
+            <div class="feature-icon">📐</div>
+            <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 8px;">Plan OTE & Confluencias</h3>
+            <p style="color: var(--text-secondary); font-size: 13px; line-height: 1.5;">
+                Cálculo automático de punto de entrada óptimo, ratio R:R mínimo institucional y stop loss protegido por volatilidad ATR.
+            </p>
+        </div>
+
+        <div class="feature-box">
+            <div class="feature-icon">🧹</div>
+            <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 8px;">Simulación Judas Swing</h3>
+            <p style="color: var(--text-secondary); font-size: 13px; line-height: 1.5;">
+                Detección del Rango de Asia en tiempo real y cálculo estadístico en vivo de la probabilidad de barrido al abrir la sesión de Londres.
+            </p>
+        </div>
+
+        <div class="feature-box">
+            <div class="feature-icon">📊</div>
+            <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 8px;">Fair Value Gaps & OBs</h3>
+            <p style="color: var(--text-secondary); font-size: 13px; line-height: 1.5;">
+                Mapeo de ineficiencias de mercado con marcación exacta de la Consecuente Encroachment (50% CE) y mitigaciones en vivo.
+            </p>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer style="text-align: center; padding: 40px 0 20px; color: var(--text-muted); font-size: 12px; border-top: 1px solid var(--border-subtle);">
+        Frias Quant Systems © 2026 · Todos los derechos reservados. Indicadores y Algoritmos para TradingView.
+    </footer>
+</div>
+
+<script src="license_engine.js"></script>
+<script>
+    function checkMyLicense() {
+        const query = (document.getElementById("checkInput").value || "").trim().toLowerCase();
+        const resBox = document.getElementById("checkResult");
+        if (!query) return;
+
+        const stored = localStorage.getItem("valyrian_subscribers_db");
+        let list = [];
+        if (stored) {
+            try { list = JSON.parse(stored); } catch (e) {}
+        }
+
+        const found = list.find(s => s.tvUser.toLowerCase() === query || s.email.toLowerCase() === query);
+
+        resBox.style.display = "block";
+        if (found) {
+            const days = calculateDaysRemaining(found.expYear, found.expMonth, found.expDay);
+            const st = getLicenseStatus(days, found.isBlocked);
+            const expFormatted = `${String(found.expDay).padStart(2, '0')}/${String(found.expMonth).padStart(2, '0')}/${found.expYear}`;
+
+            resBox.innerHTML = `
+                <div style="background: rgba(0, 229, 255, 0.08); border: 1px solid var(--border-focus); border-radius: 8px; padding: 16px; text-align: left;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <span style="font-weight: 700; font-size: 15px;">${found.name}</span>
+                        <span class="status-badge ${st.colorClass}">${st.badge}</span>
+                    </div>
+                    <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 4px;"><strong>TradingView ID:</strong> @${found.tvUser}</div>
+                    <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 4px;"><strong>Plan:</strong> ${found.plan}</div>
+                    <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 4px;"><strong>Válido hasta:</strong> ${expFormatted} (${days > 0 ? days + ' días restantes' : 'Vencido'})</div>
+                    <div style="font-size: 13px; color: var(--accent-cyan); font-family: monospace; margin-top: 8px;"><strong>Clave Registrada:</strong> ${found.licenseKey}</div>
+                </div>
+            `;
+        } else {
+            resBox.innerHTML = `
+                <div style="background: rgba(255, 23, 68, 0.08); border: 1px solid var(--accent-red); border-radius: 8px; padding: 14px; color: var(--accent-red); font-size: 13px;">
+                    ❌ No se encontró ninguna licencia activa con esos datos. Por favor contacta al administrador para adquirir tu acceso.
+                </div>
+            `;
+        }
+    }
+</script>
+
+</body>
+</html>
+

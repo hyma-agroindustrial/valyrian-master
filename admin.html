@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Valyrian Master SMC [v7.0] - Panel de Control & Licencias</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+</head>
+<body>
+
+<!-- Pantalla de Bloqueo por PIN de Administrador -->
+<div id="loginOverlay" style="position: fixed; inset: 0; background: #0D1117; display: flex; align-items: center; justify-content: center; z-index: 9999;">
+    <div class="card-box" style="width: 380px; text-align: center; border-color: var(--accent-cyan);">
+        <div style="font-size: 40px; margin-bottom: 12px;">🛡️</div>
+        <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 8px;">VALYRIAN MASTER PRO</h2>
+        <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 20px;">Panel Administrativo Institucional</p>
+        <div class="form-group" style="text-align: left;">
+            <label>PIN DE ACCESO MASTER</label>
+            <input type="password" id="masterPinInput" class="form-input" placeholder="Ingresa tu PIN (por defecto: 9988)" autofocus>
+        </div>
+        <button class="btn btn-primary" onclick="checkMasterPin()">ACCEDER AL PANEL</button>
+        <p id="pinError" style="color: var(--accent-red); font-size: 12px; margin-top: 10px; display: none;">PIN incorrecto. Intenta nuevamente.</p>
+    </div>
+</div>
+
+<div class="container" id="adminApp" style="display: none;">
+    <!-- Barra Superior -->
+    <header class="header-bar">
+        <div class="brand-title">
+            <span style="font-size: 28px;">🛡️</span>
+            <div>
+                <h1>VALYRIAN MASTER SMC [v7.0]</h1>
+                <p style="font-size: 12px; color: var(--text-secondary);">Sistema Institucional de Licencias & Monitoreo en Vivo · XAUUSD</p>
+            </div>
+            <span class="brand-badge">ADMIN CORE</span>
+        </div>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <button class="btn btn-secondary btn-sm" onclick="exportDataJSON()">📥 Descargar Respaldo JSON</button>
+            <label class="btn btn-secondary btn-sm" style="cursor: pointer; margin: 0;">
+                📤 Importar JSON <input type="file" id="importFileInput" style="display: none;" onchange="importDataJSON(event)">
+            </label>
+            <button class="btn btn-danger btn-sm" onclick="logoutAdmin()">🔒 Cerrar Sesión</button>
+        </div>
+    </header>
+
+    <!-- Tarjetas de Métricas en Vivo -->
+    <section class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-label">Total Suscriptores</div>
+            <div class="stat-value" id="statTotal" style="color: var(--text-primary);">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Licencias Activas</div>
+            <div class="stat-value" id="statActive" style="color: var(--accent-green);">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Por Vencer (&le; 5 días)</div>
+            <div class="stat-value" id="statWarning" style="color: var(--accent-gold);">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Bloqueadas / Vencidas</div>
+            <div class="stat-value" id="statExpired" style="color: var(--accent-red);">0</div>
+        </div>
+    </section>
+
+    <!-- Área Principal de Trabajo -->
+    <main class="dashboard-grid">
+        <!-- Columna Izquierda: Generador de Licencias -->
+        <aside class="card-box">
+            <h2 class="card-title"><span>⚡</span> Generar Nueva Licencia</h2>
+            
+            <form id="licenseForm" onsubmit="event.preventDefault(); handleCreateLicense();">
+                <div class="form-group">
+                    <label>NOMBRE DEL CLIENTE</label>
+                    <input type="text" id="clientName" class="form-input" placeholder="Ej: Carlos Mendoza" required>
+                </div>
+
+                <div class="form-group">
+                    <label>USUARIO DE TRADINGVIEW (Exacto)</label>
+                    <input type="text" id="tvUsername" class="form-input" placeholder="Ej: cmendoza_fx" required>
+                </div>
+
+                <div class="form-group">
+                    <label>CORREO ELECTRÓNICO</label>
+                    <input type="email" id="clientEmail" class="form-input" placeholder="cliente@trading.com" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>PLAN</label>
+                        <select id="planType" class="form-select" onchange="autoSetExpiryDate()">
+                            <option value="1 Mes">1 Mes (30 días)</option>
+                            <option value="3 Meses" selected>3 Meses (Trimestre)</option>
+                            <option value="6 Meses">6 Meses (Semestre)</option>
+                            <option value="1 Año">1 Año (Anual)</option>
+                            <option value="Vitalicio">Vitalicio (3 años)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>FECHA EXPIRACIÓN</label>
+                        <input type="date" id="expiryDate" class="form-input" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">⚡ GENERAR LICENCIA INSTITUCIONAL</button>
+            </form>
+
+            <!-- Previsualización del Serial Generado -->
+            <div id="licensePreviewBox" class="license-preview">
+                <div style="font-size: 11px; color: var(--accent-cyan); font-weight: 700; text-transform: uppercase;">¡Licencia Generada con Éxito!</div>
+                <div class="license-serial" id="previewSerial">VALY-0000-0000</div>
+                <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 10px;">Copia y envía este mensaje de bienvenida a tu cliente:</p>
+                <button class="btn btn-secondary btn-sm" style="width: 100%;" onclick="copyClientMessage()">📋 Copiar Instrucciones de Acceso</button>
+            </div>
+        </aside>
+
+        <!-- Columna Derecha: Tabla de Suscriptores en Vivo -->
+        <section class="card-box">
+            <div class="table-toolbar">
+                <h2 class="card-title" style="margin-bottom: 0; border: none; padding: 0;">
+                    <span>👥</span> Suscriptores Monitoreados
+                </h2>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="searchInput" class="form-input search-input" placeholder="🔍 Buscar por usuario, email o serial..." onkeyup="renderTable()">
+                    <select id="filterStatus" class="form-select" style="width: 140px;" onchange="renderTable()">
+                        <option value="ALL">Todos</option>
+                        <option value="ACTIVE">Activos</option>
+                        <option value="WARNING">Por Vencer</option>
+                        <option value="EXPIRED">Vencidos</option>
+                        <option value="BLOCKED">Bloqueados</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="custom-table">
+                    <thead>
+                        <tr>
+                            <th>Cliente / TV User</th>
+                            <th>Email</th>
+                            <th>Plan</th>
+                            <th>Clave Licencia</th>
+                            <th>Expiración</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="subscribersTableBody">
+                        <!-- Filas dinámicas generadas por JS -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+</div>
+
+<script src="license_engine.js"></script>
+<script>
+    // Configuración y Persistencia Local
+    const MASTER_PIN = "9988"; // Cambiar por tu PIN preferido
+    let subscribers = [];
+    let lastGeneratedMessage = "";
+
+    // Cargar datos de localStorage
+    function loadInitialData() {
+        const stored = localStorage.getItem("valyrian_subscribers_db");
+        if (stored) {
+            try {
+                subscribers = JSON.parse(stored);
+            } catch (e) {
+                console.error("Error al cargar datos:", e);
+                subscribers = [];
+            }
+        } else {
+            // Datos demo institucionales iniciales
+            subscribers = [
+                {
+                    id: "sub_1",
+                    name: "Hector Frias (Owner)",
+                    tvUser: "hectorfrias",
+                    email: "hector@friasquant.com",
+                    plan: "Vitalicio",
+                    expYear: 2028,
+                    expMonth: 12,
+                    expDay: 31,
+                    licenseKey: "VALY-PRO-2026",
+                    isBlocked: false,
+                    createdAt: new Date().toISOString()
+                },
+                {
+                    id: "sub_2",
+                    name: "Carlos Trader VIP",
+                    tvUser: "carlos_gold",
+                    email: "carlos@fxmail.com",
+                    plan: "3 Meses",
+                    expYear: 2026,
+                    expMonth: 12,
+                    expDay: 15,
+                    licenseKey: "VALY-7821-4902",
+                    isBlocked: false,
+                    createdAt: new Date().toISOString()
+                }
+            ];
+            saveData();
+        }
+    }
+
+    function saveData() {
+        localStorage.setItem("valyrian_subscribers_db", JSON.stringify(subscribers));
+    }
+
+    // Login con PIN
+    function checkMasterPin() {
+        const pin = document.getElementById("masterPinInput").value;
+        if (pin === MASTER_PIN) {
+            sessionStorage.setItem("valyrian_admin_auth", "true");
+            document.getElementById("loginOverlay").style.display = "none";
+            document.getElementById("adminApp").style.display = "block";
+            loadInitialData();
+            autoSetExpiryDate();
+            renderDashboard();
+        } else {
+            document.getElementById("pinError").style.display = "block";
+        }
+    }
+
+    function logoutAdmin() {
+        sessionStorage.removeItem("valyrian_admin_auth");
+        window.location.reload();
+    }
+
+    // Auto-completar fecha de expiración según el plan
+    function autoSetExpiryDate() {
+        const plan = document.getElementById("planType").value;
+        const now = new Date();
+        let target = new Date();
+
+        if (plan === "1 Mes") {
+            target.setDate(now.getDate() + 30);
+        } else if (plan === "3 Meses") {
+            target.setDate(now.getDate() + 90);
+        } else if (plan === "6 Meses") {
+            target.setDate(now.getDate() + 180);
+        } else if (plan === "1 Año") {
+            target.setFullYear(now.getFullYear() + 1);
+        } else if (plan === "Vitalicio") {
+            target.setFullYear(now.getFullYear() + 3);
+        }
+
+        const y = target.getFullYear();
+        const m = String(target.getMonth() + 1).padStart(2, '0');
+        const d = String(target.getDate()).padStart(2, '0');
+        document.getElementById("expiryDate").value = `${y}-${m}-${d}`;
+    }
+
+    // Crear y registrar nueva licencia
+    function handleCreateLicense() {
+        const name = document.getElementById("clientName").value.trim();
+        const tvUser = document.getElementById("tvUsername").value.trim();
+        const email = document.getElementById("clientEmail").value.trim();
+        const plan = document.getElementById("planType").value;
+        const expiryStr = document.getElementById("expiryDate").value;
+
+        if (!name || !tvUser || !email || !expiryStr) return;
+
+        const [y, m, d] = expiryStr.split("-").map(Number);
+        const licenseKey = generateValyrianLicense(tvUser, email, y, m, d);
+
+        const newSub = {
+            id: "sub_" + Date.now(),
+            name,
+            tvUser,
+            email,
+            plan,
+            expYear: y,
+            expMonth: m,
+            expDay: d,
+            licenseKey,
+            isBlocked: false,
+            createdAt: new Date().toISOString()
+        };
+
+        subscribers.unshift(newSub);
+        saveData();
+
+        // Mostrar caja de previsualización
+        document.getElementById("previewSerial").innerText = licenseKey;
+        document.getElementById("licensePreviewBox").classList.add("active");
+        lastGeneratedMessage = buildClientWelcomeMessage(name, tvUser, licenseKey, y, m, d);
+
+        // Limpiar campos principales
+        document.getElementById("clientName").value = "";
+        document.getElementById("tvUsername").value = "";
+        document.getElementById("clientEmail").value = "";
+
+        renderDashboard();
+    }
+
+    function copyClientMessage() {
+        if (!lastGeneratedMessage) return;
+        navigator.clipboard.writeText(lastGeneratedMessage).then(() => {
+            alert("✅ ¡Mensaje de bienvenida e instrucciones copiado al portapapeles!\nListo para pegar en WhatsApp o Telegram.");
+        });
+    }
+
+    // Acciones sobre suscriptores
+    function toggleBlockSubscriber(id) {
+        const sub = subscribers.find(s => s.id === id);
+        if (!sub) return;
+        sub.isBlocked = !sub.isBlocked;
+        saveData();
+        renderDashboard();
+    }
+
+    function renewSubscriber(id, days = 30) {
+        const sub = subscribers.find(s => s.id === id);
+        if (!sub) return;
+
+        const currentExp = new Date(sub.expYear, sub.expMonth - 1, sub.expDay);
+        const baseDate = currentExp > new Date() ? currentExp : new Date();
+        baseDate.setDate(baseDate.getDate() + days);
+
+        sub.expYear = baseDate.getFullYear();
+        sub.expMonth = baseDate.getMonth() + 1;
+        sub.expDay = baseDate.getDate();
+        sub.isBlocked = false;
+        sub.licenseKey = generateValyrianLicense(sub.tvUser, sub.email, sub.expYear, sub.expMonth, sub.expDay);
+
+        saveData();
+        renderDashboard();
+        alert(`✅ Suscripción de ${sub.name} renovada por ${days} días más.\nNueva clave generada: ${sub.licenseKey}`);
+    }
+
+    function deleteSubscriber(id) {
+        if (!confirm("¿Seguro que deseas eliminar este registro de cliente?")) return;
+        subscribers = subscribers.filter(s => s.id !== id);
+        saveData();
+        renderDashboard();
+    }
+
+    function copyLicenseOnly(key) {
+        navigator.clipboard.writeText(key).then(() => {
+            alert(`Copiado: ${key}`);
+        });
+    }
+
+    // Renderizado de métricas y tabla
+    function renderDashboard() {
+        let total = subscribers.length;
+        let active = 0;
+        let warning = 0;
+        let expired = 0;
+
+        subscribers.forEach(s => {
+            const days = calculateDaysRemaining(s.expYear, s.expMonth, s.expDay);
+            const st = getLicenseStatus(days, s.isBlocked);
+            if (st.code === "ACTIVE") active++;
+            else if (st.code === "WARNING") warning++;
+            else expired++;
+        });
+
+        document.getElementById("statTotal").innerText = total;
+        document.getElementById("statActive").innerText = active;
+        document.getElementById("statWarning").innerText = warning;
+        document.getElementById("statExpired").innerText = expired;
+
+        renderTable();
+    }
+
+    function renderTable() {
+        const tbody = document.getElementById("subscribersTableBody");
+        const query = (document.getElementById("searchInput").value || "").toLowerCase();
+        const filter = document.getElementById("filterStatus").value;
+
+        tbody.innerHTML = "";
+
+        const filtered = subscribers.filter(s => {
+            const matchesQuery = s.name.toLowerCase().includes(query) ||
+                                 s.tvUser.toLowerCase().includes(query) ||
+                                 s.email.toLowerCase().includes(query) ||
+                                 s.licenseKey.toLowerCase().includes(query);
+
+            const days = calculateDaysRemaining(s.expYear, s.expMonth, s.expDay);
+            const st = getLicenseStatus(days, s.isBlocked);
+            const matchesFilter = filter === "ALL" || st.code === filter;
+
+            return matchesQuery && matchesFilter;
+        });
+
+        if (filtered.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">No se encontraron suscriptores registrados.</td></tr>`;
+            return;
+        }
+
+        filtered.forEach(s => {
+            const days = calculateDaysRemaining(s.expYear, s.expMonth, s.expDay);
+            const st = getLicenseStatus(days, s.isBlocked);
+            const expFormatted = `${String(s.expDay).padStart(2, '0')}/${String(s.expMonth).padStart(2, '0')}/${s.expYear}`;
+
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td>
+                    <div style="font-weight: 700; color: var(--text-primary);">${s.name}</div>
+                    <div style="font-size: 11px; color: var(--accent-cyan); font-family: monospace;">@${s.tvUser}</div>
+                </td>
+                <td style="color: var(--text-secondary);">${s.email}</td>
+                <td><span style="font-size: 11px; font-weight: 600; color: var(--accent-gold);">${s.plan}</span></td>
+                <td>
+                    <span style="font-family: monospace; font-size: 12px; background: #000; padding: 3px 6px; border-radius: 4px; cursor: pointer;" title="Clic para copiar" onclick="copyLicenseOnly('${s.licenseKey}')">
+                        ${s.licenseKey} 📋
+                    </span>
+                </td>
+                <td style="font-family: monospace;">${expFormatted}</td>
+                <td>
+                    <span class="status-badge ${st.colorClass}">${st.badge}</span>
+                </td>
+                <td>
+                    <div class="action-group">
+                        <button class="btn btn-secondary btn-sm" title="Renovar +30 días" onclick="renewSubscriber('${s.id}', 30)">+30d</button>
+                        <button class="btn ${s.isBlocked ? 'btn-primary' : 'btn-danger'} btn-sm" onclick="toggleBlockSubscriber('${s.id}')">
+                            ${s.isBlocked ? 'Desbloquear' : 'Bloquear'}
+                        </button>
+                        <button class="btn btn-secondary btn-sm" style="color: var(--accent-red);" title="Eliminar" onclick="deleteSubscriber('${s.id}')">✕</button>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // Respaldo JSON
+    function exportDataJSON() {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(subscribers, null, 2));
+        const a = document.createElement("a");
+        a.setAttribute("href", dataStr);
+        a.setAttribute("download", `valyrian_subscribers_backup_${new Date().toISOString().slice(0,10)}.json`);
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+    }
+
+    function importDataJSON(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const imported = JSON.parse(e.target.result);
+                if (Array.isArray(imported)) {
+                    subscribers = imported;
+                    saveData();
+                    renderDashboard();
+                    alert("✅ Respaldo importado correctamente con " + subscribers.length + " suscriptores.");
+                } else {
+                    alert("Formato inválido.");
+                }
+            } catch (err) {
+                alert("Error al leer el archivo JSON.");
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    // Auto-login si ya inició sesión en esta pestaña
+    window.addEventListener("DOMContentLoaded", () => {
+        if (sessionStorage.getItem("valyrian_admin_auth") === "true") {
+            document.getElementById("loginOverlay").style.display = "none";
+            document.getElementById("adminApp").style.display = "block";
+            loadInitialData();
+            autoSetExpiryDate();
+            renderDashboard();
+        }
+    });
+</script>
+
+</body>
+</html>
+
